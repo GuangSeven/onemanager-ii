@@ -590,13 +590,7 @@ class Aliyundrive {
         return $thumb_url;
     }
     public function smallfileupload($path, $tmpfile) {
-        if (!$_SERVER['admin']) {
-            $tmp1 = splitlast($tmpfile['name'], '.');
-            if ($tmp1[0] == '' || $tmp1[1] == '') $filename = sha1_file($tmpfile['tmp_name']);
-            else $filename = sha1_file($tmpfile['tmp_name']) . '.' . $tmp1[1];
-        } else {
-            $filename = $tmpfile['name'];
-        }
+        $filename = $tmpfile['name'];
         //$content = file_get_contents($tmpfile['tmp_name']);
         $result = $this->tmpfileCreate($this->list_path($_SERVER['list_path'] . '/' . $path . '/')['file_id'], $tmpfile['tmp_name'], $filename);
         //error_log1('1,url:' . $url .' res:' . json_encode($result));
@@ -670,19 +664,13 @@ class Aliyundrive {
             $tmp = splitlast($_POST['upbigfilename'], '/');
             if ($tmp[1] != '') {
                 $fileinfo['name'] = $tmp[1];
-                if ($_SERVER['admin']) $fileinfo['path'] = $tmp[0];
+                $fileinfo['path'] = $tmp[0];
             } else {
                 $fileinfo['name'] = $_POST['upbigfilename'];
             }
             $fileinfo['size'] = $_POST['filesize'];
             $fileinfo['filelastModified'] = $_POST['filelastModified'];
-            if ($_SERVER['admin']) {
-                $filename = $fileinfo['name'];
-            } else {
-                $tmp1 = splitlast($fileinfo['name'], '.');
-                if ($tmp1[0] == '' || $tmp1[1] == '') $filename = $_POST['filesha1'];
-                else $filename = $_POST['filesha1'] . '.' . $tmp1[1];
-            }
+            $filename = $fileinfo['name'];
 
             $parent = $this->list_path($path . '/' . $fileinfo['path']);
             if (isset($parent['file_id'])) {

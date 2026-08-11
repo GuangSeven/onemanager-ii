@@ -332,6 +332,11 @@ function main($path) {
         if ($_GET['action'] == 'del_upload_cache') {
             // del '.tmp' without login. 无需登录即可删除.tmp后缀文件
             if (!driveisfine($_SERVER['disktag'], $drive)) return output($_SERVER['disktag'] ? 'disk [ ' . $_SERVER['disktag'] . ' ] error.' : 'Not in drive', 403);
+            if (!$_SERVER['admin']) {
+                if (!$_SERVER['is_guestup_path']) return output('Not_Guest_Upload_Folder', 400);
+                $gup_root = path_format(getConfig('guestup_path', $_SERVER['disktag']));
+                if (passhidden($gup_root) >= 4) return output('Not_Allow_Upload', 400);
+            }
             savecache('path_' . $path1, '', $_SERVER['disktag'], 1); // clear cache.
             return $drive->del_upload_cache($path);
         }
@@ -340,6 +345,11 @@ function main($path) {
             if (!driveisfine($_SERVER['disktag'], $drive)) return output($_SERVER['disktag'] ? 'disk [ ' . $_SERVER['disktag'] . ' ] error.' : 'Not in drive', 403);
             if (!$_SERVER['admin']) {
                 if (!$_SERVER['is_guestup_path']) return output('Not_Guest_Upload_Folder', 400);
+                $gup_root = path_format(getConfig('guestup_path', $_SERVER['disktag']));
+                if (passhidden($gup_root) >= 4) return output('Not_Allow_Upload', 400);
+                $gup_basename = splitlast($_POST['upbigfilename'], '/');
+                $gup_basename = ($gup_basename[1] != '') ? $gup_basename[1] : $_POST['upbigfilename'];
+                if (getConfig('passfile') != '' && strtolower($gup_basename) == strtolower(getConfig('passfile'))) return output('Not_Allow_Upload_Passfile', 400);
                 if (strpos($_GET['upbigfilename'], '../') !== false) return output('Not_Allow_Cross_Path', 400);
                 if (strpos($_POST['upbigfilename'], '../') !== false) return output('Not_Allow_Cross_Path', 400);
             }
@@ -352,6 +362,9 @@ function main($path) {
         if (!driveisfine($_SERVER['disktag'], $drive)) return output($_SERVER['disktag'] ? 'disk [ ' . $_SERVER['disktag'] . ' ] error.' : 'Not in drive', 403);
         if (!$_SERVER['admin']) {
             if (!$_SERVER['is_guestup_path']) return output('Not_Guest_Upload_Folder', 400);
+            $gup_root = path_format(getConfig('guestup_path', $_SERVER['disktag']));
+            if (passhidden($gup_root) >= 4) return output('Not_Allow_Upload', 400);
+            if (getConfig('passfile') != '' && isset($_FILES['file1']['name']) && strtolower($_FILES['file1']['name']) == strtolower(getConfig('passfile'))) return output('Not_Allow_Upload_Passfile', 400);
             if (strpos($_GET['upbigfilename'], '../') !== false) return output('Not_Allow_Cross_Path', 400);
             if (strpos($_POST['upbigfilename'], '../') !== false) return output('Not_Allow_Cross_Path', 400);
         }
@@ -402,7 +415,7 @@ function main($path) {
 
     // list folder
     if ($_SERVER['is_guestup_path'] && !$_SERVER['admin']) {
-        $files = json_decode('{"type":"folder"}', true);
+        $files = json_decode('{"type":"folder","list":{}}', true);
     } elseif ($_SERVER['ishidden'] == 4) {
         if (!getConfig('downloadencrypt', $_SERVER['disktag'])) {
             $files = json_decode('{"type":"file"}', true);
@@ -848,6 +861,7 @@ function is_guestup_path($path) {
         $a1 = path_format(path_format(urldecode($_SERVER['list_path'] . path_format($path))) . '/');
         $a2 = path_format(path_format(getConfig('guestup_path', $_SERVER['disktag'])) . '/');
         if (strtolower($a1) == strtolower($a2)) return 1;
+        if (strtolower(substr($a1, 0, strlen($a2))) == strtolower($a2)) return 1;
     }
     return 0;
 }
@@ -2458,7 +2472,9 @@ function render_list($path = '', $files = []) {
         }
         replaceHtml($html, "constStr@Download", getconstStr('Download'));
 
-        if ($_SERVER['is_guestup_path'] && !$_SERVER['admin']) {
+        $gup_root = '';
+        if ($_SERVER['is_guestup_path']) $gup_root = path_format(getConfig('guestup_path', $_SERVER['disktag']));
+        if ($_SERVER['is_guestup_path'] && !$_SERVER['admin'] && passhidden($gup_root) < 4) {
             getStackHtml($html, "IsFile", 1);
             getStackHtml($html, "IsFolder", 1);
             getStackHtml($html, "GuestUpload", 0);
@@ -2476,7 +2492,7 @@ function render_list($path = '', $files = []) {
                 $Driver_arr[] = $v1;
             }
         }
-        if ($_SERVER['is_guestup_path'] || ($_SERVER['admin'] && $files['type'] == 'folder' && $_SERVER['ishidden'] < 4)) {
+        if (($_SERVER['is_guestup_path'] && passhidden($gup_root) < 4) || ($_SERVER['admin'] && $files['type'] == 'folder' && ($_SERVER['ishidden'] ?? 0) < 4)) {
             $now_driver = baseclassofdrive();
             if ($now_driver) {
                 getStackHtml($html, "UploadJs", 0);

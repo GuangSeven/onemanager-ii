@@ -986,13 +986,7 @@ class Onedrive {
     }
 
     public function smallfileupload($path, $tmpfile) {
-        if (!$_SERVER['admin']) {
-            $tmp1 = splitlast($tmpfile['name'], '.');
-            if ($tmp1[0] == '' || $tmp1[1] == '') $filename = md5_file($tmpfile['tmp_name']);
-            else $filename = md5_file($tmpfile['tmp_name']) . '.' . $tmp1[1];
-        } else {
-            $filename = $tmpfile['name'];
-        }
+        $filename = $tmpfile['name'];
         $content = file_get_contents($tmpfile['tmp_name']);
         $result = $this->MSAPI('PUT', path_format($_SERVER['list_path'] . '/' . $path . '/' . $filename), $content);
         $res = $this->files_format(json_decode($result['body'], true));
@@ -1007,19 +1001,13 @@ class Onedrive {
         $tmp = splitlast($_POST['upbigfilename'], '/');
         if ($tmp[1] != '') {
             $fileinfo['name'] = $tmp[1];
-            if ($_SERVER['admin']) $fileinfo['path'] = $tmp[0];
+            $fileinfo['path'] = $tmp[0];
         } else {
             $fileinfo['name'] = $_POST['upbigfilename'];
         }
         $fileinfo['size'] = $_POST['filesize'];
         $fileinfo['filelastModified'] = $_POST['filelastModified'];
-        if ($_SERVER['admin']) {
-            $filename = spurlencode($_POST['upbigfilename'], '/');
-        } else {
-            $tmp1 = splitlast($fileinfo['name'], '.');
-            if ($tmp1[0] == '' || $tmp1[1] == '') $filename = $_POST['filemd5'];
-            else $filename = $_POST['filemd5'] . '.' . $tmp1[1];
-        }
+        $filename = spurlencode($_POST['upbigfilename'], '/');
         if ($fileinfo['size'] > 10 * 1024 * 1024) {
             $cachefilename = spurlencode($fileinfo['path'] . '/.' . $fileinfo['filelastModified'] . '_' . $fileinfo['size'] . '_' . $fileinfo['name'] . '.tmp', '/');
             $getoldupinfo = $this->list_files(path_format($path . '/' . $cachefilename));
