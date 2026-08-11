@@ -2374,7 +2374,11 @@ function render_list($path = '', $files = []) {
 
     //if (isset($_COOKIE['theme'])&&$_COOKIE['theme']!='') $theme = $_COOKIE['theme'];
     //if ( !file_exists(__DIR__ . $slash .'theme' . $slash . $theme) ) $theme = '';
-    if ($_SERVER['admin']) $theme = 'classic.html';
+    if ($_SERVER['admin']) {
+        $tmp = getConfig('customTheme');
+        if ($tmp != '') $theme = $tmp;
+        else $theme = 'classic.html';
+    }
     if ($theme == '') {
         $tmp = getConfig('customTheme');
         if ($tmp != '') $theme = $tmp;
