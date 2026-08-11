@@ -414,7 +414,9 @@ function main($path) {
     }
 
     // list folder
-    if ($_SERVER['is_guestup_path'] && !$_SERVER['admin']) {
+    $gup_root = '';
+    if ($_SERVER['is_guestup_path']) $gup_root = path_format(getConfig('guestup_path', $_SERVER['disktag']));
+    if ($_SERVER['is_guestup_path'] && !$_SERVER['admin'] && passhidden($gup_root) >= 4) {
         $files = json_decode('{"type":"folder","list":{}}', true);
     } elseif ($_SERVER['ishidden'] == 4) {
         if (!getConfig('downloadencrypt', $_SERVER['disktag'])) {
@@ -2474,10 +2476,10 @@ function render_list($path = '', $files = []) {
 
         $gup_root = '';
         if ($_SERVER['is_guestup_path']) $gup_root = path_format(getConfig('guestup_path', $_SERVER['disktag']));
-        if ($_SERVER['is_guestup_path'] && !$_SERVER['admin'] && passhidden($gup_root) < 4) {
+        if ($_SERVER['is_guestup_path'] && !$_SERVER['admin'] && passhidden($gup_root) >= 4) {
             getStackHtml($html, "IsFile", 1);
             getStackHtml($html, "IsFolder", 1);
-            getStackHtml($html, "GuestUpload", 0);
+            getStackHtml($html, "GuestUpload", 1);
             getStackHtml($html, "IsNotHidden", 1);
         } else {
             getStackHtml($html, "GuestUpload", 1);
