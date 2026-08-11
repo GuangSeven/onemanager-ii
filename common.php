@@ -1916,8 +1916,8 @@ output:
         <option value="Gitee">Gitee</option>
         <!--option value="HITGitlab">HIT Gitlab</option-->
     </select>
-    <input type="text" name="auth" size="6" placeholder="auth" value="qkqpttgf">
-    <input type="text" name="project" size="12" placeholder="project" value="OneManager-php">
+    <input type="text" name="auth" size="6" placeholder="auth" value="GuangSeven">
+    <input type="text" name="project" size="12" placeholder="project" value="onemanager-ii">
     <button name="QueryBranchs" onclick="querybranchs(this);return false;">' . getconstStr('QueryBranchs') . '</button>
     <select name="branch">
         <option value="master">master</option>
@@ -1927,8 +1927,8 @@ output:
 
 <script>
     function changeGitSource(d) {
-        if (d.options[d.options.selectedIndex].value=="Github") document.updateform.auth.value = "qkqpttgf";
-        if (d.options[d.options.selectedIndex].value=="Gitee") document.updateform.auth.value = "qkqpttgf";
+        if (d.options[d.options.selectedIndex].value=="Github") document.updateform.auth.value = "GuangSeven";
+        if (d.options[d.options.selectedIndex].value=="Gitee") document.updateform.auth.value = "GuangSeven";
         if (d.options[d.options.selectedIndex].value=="HITGitlab") document.updateform.auth.value = "ysun";
         document.updateform.QueryBranchs.style.display = null;
         document.updateform.branch.options.length = 0;
