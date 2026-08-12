@@ -449,9 +449,11 @@ function OnekeyUpate($GitSource = 'Github', $auth = 'qkqpttgf', $project = 'OneM
     } else return json_encode(['error' => ['code' => 'Git Source input Error!']]);
 
     $newsha = '';
-    if (isset($apiurl)) {
+    $apictx = stream_context_create(['http' => ['header' => "User-Agent: OneManager/2.0", 'timeout' => 8]]);
+    $atom = @file_get_contents('https://github.com/' . $auth . '/' . $project . '/commits/' . urlencode($branch) . '.atom', false, $apictx);
+    if ($atom && preg_match('/Grit::Commit\/([0-9a-f]{40})/', $atom, $am)) $newsha = substr($am[1], 0, 7);
+    if (!$newsha && isset($apiurl)) {
         $api_body = '';
-        $apictx = stream_context_create(['http' => ['header' => "User-Agent: OneManager/2.0", 'timeout' => 8]]);
         $api_body = @file_get_contents($apiurl, false, $apictx);
         if (!$api_body && function_exists('curl_init')) {
             $apir = curl('GET', $apiurl, '', ['User-Agent' => 'OneManager/2.0']);
@@ -495,7 +497,9 @@ function OnekeyUpate($GitSource = 'Github', $auth = 'qkqpttgf', $project = 'OneM
     copy($coderoot . '.data/config.php', $outPath . '/api/.data/config.php');
     if (file_exists($coderoot . '.data/om_sha')) copy($coderoot . '.data/om_sha', $outPath . '/api/.data/om_sha');
 
-    return VercelUpdate(getConfig('APIKey'), $outPath);
+    $update_result = VercelUpdate(getConfig('APIKey'), $outPath);
+    if (is_array($update_result)) $update_result['om_sha'] = ($newsha != '') ? $newsha : 'FAIL';
+    return $update_result;
 }
 
 function getProjectInfofromDeployIDInENV($token) {

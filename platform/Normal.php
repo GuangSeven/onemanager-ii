@@ -322,9 +322,11 @@ function OnekeyUpate($GitSource = 'Github', $auth = 'qkqpttgf', $project = 'OneM
     }
 
     $newsha = '';
-    if (isset($apiurl)) {
+    $apictx = stream_context_create(['http' => ['header' => "User-Agent: OneManager/2.0", 'timeout' => 8]]);
+    $atom = @file_get_contents('https://github.com/' . $auth . '/' . $project . '/commits/' . urlencode($branch) . '.atom', false, $apictx);
+    if ($atom && preg_match('/Grit::Commit\/([0-9a-f]{40})/', $atom, $am)) $newsha = substr($am[1], 0, 7);
+    if (!$newsha && isset($apiurl)) {
         $api_body = '';
-        $apictx = stream_context_create(['http' => ['header' => "User-Agent: OneManager/2.0", 'timeout' => 8]]);
         $api_body = @file_get_contents($apiurl, false, $apictx);
         if (!$api_body && function_exists('curl_init')) {
             $apir = curl('GET', $apiurl, '', ['User-Agent' => 'OneManager/2.0']);

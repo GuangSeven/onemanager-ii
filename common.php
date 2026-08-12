@@ -1427,7 +1427,7 @@ function EnvOpt($needUpdate = 0) {
             return message($html, $title, 400);
         } else {
             //WaitSCFStat();
-            $html .= getconstStr('UpdateSuccess') . '<br><a href="">' . getconstStr('Back') . '</a><script>var status = "' . (isset($response['DplStatus']) ? $response['DplStatus'] : "") . '";</script>';
+            $html .= getconstStr('UpdateSuccess') . '<br>om_sha: ' . (isset($response['om_sha']) ? $response['om_sha'] : 'n/a') . '<br><a href="">' . getconstStr('Back') . '</a><script>var status = "' . (isset($response['DplStatus']) ? $response['DplStatus'] : "") . '";</script>';
             $title = getconstStr('Setup');
             return message($html, $title, 202, 1);
         }
@@ -2714,8 +2714,9 @@ function render_list($path = '', $files = []) {
         }
         replaceHtml($html, "ThemeUrl", htmlspecialchars(getConfig('customTheme')));
         $om_sha = @file_get_contents(__DIR__ . $slash . '.data' . $slash . 'om_sha');
-        if (!$om_sha || trim($om_sha) == '') $om_sha = '—';
-        replaceHtml($html, "OmHash", htmlspecialchars(trim($om_sha)));
+        $om_sha = preg_replace('/^\xEF\xBB\xBF/', '', trim($om_sha));
+        if (!$om_sha || $om_sha == '') $om_sha = '—';
+        replaceHtml($html, "OmHash", htmlspecialchars($om_sha));
 
         $title = $pretitle;
         if ($_SERVER['base_disk_path'] != $_SERVER['base_path']) {
