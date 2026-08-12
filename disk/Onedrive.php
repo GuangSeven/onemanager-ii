@@ -416,7 +416,7 @@ class Onedrive {
         return output(json_encode($this->files_format(json_decode($result['body'], true))), $result['stat']);
         //return output($result['body'], $result['stat']);
     }
-    public function Copy($file) {
+    public function Copy($file, $folder = null) {
         $filename = spurlencode($file['name']);
         $filename = path_format($file['path'] . '/' . $filename);
         $namearr = splitlast($file['name'], '.');
@@ -427,7 +427,11 @@ class Onedrive {
         } else {
             $newname = '.' . $namearr[1] . ' (' . date("Ymd\THis\Z") . ')';
         }
-        $data = '{ "name": "' . $newname . '" }';
+        if ($folder !== null && isset($folder['path']) && $folder['path'] != '') {
+            $data = '{ "name": "' . $newname . '", "parentReference": { "path": "/drive/root:' . $folder['path'] . '" } }';
+        } else {
+            $data = '{ "name": "' . $newname . '" }';
+        }
         if ($file['id']) $result = $this->MSAPI('copy', "/items/" . $file['id'], $data);
         else $result = $this->MSAPI('copy', $filename, $data);
         /*$num = 0;

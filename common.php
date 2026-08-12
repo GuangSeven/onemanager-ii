@@ -1314,6 +1314,8 @@ function adminoperate($path) {
                 $foldername = path_format('/' . urldecode($path1 . '/'));
                 $foldername = substr($foldername, 0, -1);
                 $foldername = splitlast($foldername, '/')[0];
+            } elseif (substr(${$VAR}['move_folder'], 0, 1) == '/') {
+                $foldername = path_format(urldecode(${$VAR}['move_folder']));
             } else $foldername = path_format('/' . urldecode($path1) . '/' . ${$VAR}['move_folder']);
             $folder['path'] = $foldername;
             $folder['name'] = ${$VAR}['move_folder'];
@@ -1331,6 +1333,12 @@ function adminoperate($path) {
         $file['path'] = $path1;
         $file['name'] = ${$VAR}['copy_name'];
         $file['id'] = ${$VAR}['copy_fileid'];
+        if (isset(${$VAR}['copy_folder']) && ${$VAR}['copy_folder'] != '' && substr(${$VAR}['copy_folder'], 0, 1) == '/') {
+            $folder['path'] = path_format(urldecode(${$VAR}['copy_folder']));
+            $folder['name'] = splitlast(${$VAR}['copy_folder'], '/')[1];
+            $folder['id'] = '';
+            return $drive->Copy($file, $folder);
+        }
         return $drive->Copy($file);
     }
     if (isset($tmppost['editfile'])) {
