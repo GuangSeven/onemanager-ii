@@ -373,7 +373,13 @@ function main($path) {
         if ($_FILES['file1']['size']>4*1024*1024) return output('File too large', 400);
         return $drive->smallfileupload($path, $_FILES['file1']);*/
     }
-    if ($_SERVER['admin'] || ($_SERVER['is_guestup_path'] && passhidden(path_format(getConfig('guestup_path', $_SERVER['disktag']))) < 4)) {
+    if ($_SERVER['admin']) {
+        $tmp = adminoperate($path);
+        if ($tmp['statusCode'] > 0) {
+            savecache('path_' . $path1, '', $_SERVER['disktag'], 1);
+            return $tmp;
+        }
+    } elseif ($_SERVER['is_guestup_path'] && driveisfine($_SERVER['disktag'], $drive) && passhidden(path_format(getConfig('guestup_path', $_SERVER['disktag']))) < 4) {
         $tmp = adminoperate($path);
         if ($tmp['statusCode'] > 0) {
             savecache('path_' . $path1, '', $_SERVER['disktag'], 1);
