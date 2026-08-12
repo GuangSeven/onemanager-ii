@@ -2410,7 +2410,7 @@ function render_list($path = '', $files = []) {
                 //error_log1($file_path . " =+= " . json_encode($tmp));
                 if ($tmp['stat'] == 200) {
                     $html = $tmp['body'];
-                    savecache('customTheme', $html, '', 9999);
+                    savecache('customTheme', $html, '', 300);
                 } else {
                     $html = "<pre>" . json_encode($tmp, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "</pre>";
                 }
