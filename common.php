@@ -2706,6 +2706,13 @@ function render_list($path = '', $files = []) {
 
         replaceHtml($html, "constStr@language", $_SERVER['language']);
 
+        $ver_file = @file_get_contents(__DIR__ . $slash . 'version');
+        if ($ver_file) {
+            replaceHtml($html, "Version", htmlspecialchars(trim(splitfirst($ver_file, ' ')[0])));
+        } else {
+            replaceHtml($html, "Version", '-');
+        }
+
         $title = $pretitle;
         if ($_SERVER['base_disk_path'] != $_SERVER['base_path']) {
             if (getConfig('diskname') != '') $diskname = getConfig('diskname');
