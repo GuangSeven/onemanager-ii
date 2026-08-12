@@ -309,14 +309,26 @@ function OnekeyUpate($GitSource = 'Github', $auth = 'qkqpttgf', $project = 'OneM
         //$url = 'https://github.com/' . $auth . '/' . $project . '/tarball/' . urlencode($branch) . '/';
         // 从github下载对应zip，并解压
         $url = 'https://codeload.github.com/' . $auth . '/' . $project . '/zip/refs/heads/' . urlencode($branch);
+        $apiurl = 'https://api.github.com/repos/' . $auth . '/' . $project . '/commits/' . urlencode($branch);
     } elseif ($GitSource == 'Gitee') {
         $url = 'https://gitee.com/' . $auth . '/' . $project . '/repository/archive/' . urlencode($branch) . '.zip';
+        $apiurl = 'https://gitee.com/api/v5/repos/' . $auth . '/' . $project . '/branches/' . urlencode($branch);
     }/* elseif ($GitSource == 'HITGitlab') {
         $url = 'https://git.hit.edu.cn/' . $auth . '/' . $project . '/-/archive/' . urlencode($branch) . '/' . $project . '-' . urlencode($branch) . '.tar.gz';
     }*/ else {
         $tmp1['code'] = "Failed";
         $tmp1['message'] = "Unkown source " . $GitSource;
         return json_encode($tmp1);
+    }
+
+    $newsha = '';
+    if (isset($apiurl)) {
+        $apir = curl('GET', $apiurl, '', ['User-Agent' => 'OneManager/2.0']);
+        if ($apir['stat'] == 200) {
+            $apij = json_decode($apir['body'], true);
+            if (isset($apij['commit']['sha'])) $newsha = substr($apij['commit']['sha'], 0, 7);
+            elseif (isset($apij['sha'])) $newsha = substr($apij['sha'], 0, 7);
+        }
     }
     $zipfile = $projectPath . $slash . 'updateCode.zip';
     $context_options = array(
@@ -368,12 +380,14 @@ function OnekeyUpate($GitSource = 'Github', $auth = 'qkqpttgf', $project = 'OneM
     }
 
     //unlink($outPath.'/config.php');
+    if ($newsha != '') @file_put_contents($projectPath . $slash . '.data' . $slash . 'om_sha', $newsha);
     $response = rename($projectPath . $slash . '.data' . $slash . 'config.php', $outPath . $slash . '.data' . $slash . 'config.php');
     if (!$response) {
         $tmp1['code'] = "Move Failed";
         $tmp1['message'] = "Can not move " . $projectPath . $slash . '.data' . $slash . 'config.php' . " to " . $outPath . $slash . '.data' . $slash . 'config.php';
         return json_encode($tmp1);
     }
+    if (file_exists($projectPath . $slash . '.data' . $slash . 'om_sha')) @rename($projectPath . $slash . '.data' . $slash . 'om_sha', $outPath . $slash . '.data' . $slash . 'om_sha');
     return moveFolder($outPath, $projectPath);
 }
 

@@ -2713,8 +2713,9 @@ function render_list($path = '', $files = []) {
             replaceHtml($html, "Version", '-');
         }
         replaceHtml($html, "ThemeUrl", htmlspecialchars(getConfig('customTheme')));
-        $om_hash = substr(md5(@file_get_contents(__DIR__ . $slash . 'common.php')), 0, 7);
-        replaceHtml($html, "OmHash", $om_hash);
+        $om_sha = @file_get_contents(__DIR__ . $slash . '.data' . $slash . 'om_sha');
+        if (!$om_sha || trim($om_sha) == '') $om_sha = '—';
+        replaceHtml($html, "OmHash", htmlspecialchars(trim($om_sha)));
 
         $title = $pretitle;
         if ($_SERVER['base_disk_path'] != $_SERVER['base_path']) {

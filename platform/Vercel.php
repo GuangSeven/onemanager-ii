@@ -442,9 +442,21 @@ function OnekeyUpate($GitSource = 'Github', $auth = 'qkqpttgf', $project = 'OneM
     if ($GitSource == 'Github') {
         // 从github下载对应zip，并解压
         $url = 'https://codeload.github.com/' . $auth . '/' . $project . '/zip/refs/heads/' . urlencode($branch);
+        $apiurl = 'https://api.github.com/repos/' . $auth . '/' . $project . '/commits/' . urlencode($branch);
     } elseif ($GitSource == 'Gitee') {
         $url = 'https://gitee.com/' . $auth . '/' . $project . '/repository/archive/' . urlencode($branch) . '.zip';
+        $apiurl = 'https://gitee.com/api/v5/repos/' . $auth . '/' . $project . '/branches/' . urlencode($branch);
     } else return json_encode(['error' => ['code' => 'Git Source input Error!']]);
+
+    $newsha = '';
+    if (isset($apiurl)) {
+        $apir = curl('GET', $apiurl, '', ['User-Agent' => 'OneManager/2.0']);
+        if ($apir['stat'] == 200) {
+            $apij = json_decode($apir['body'], true);
+            if (isset($apij['commit']['sha'])) $newsha = substr($apij['commit']['sha'], 0, 7);
+            elseif (isset($apij['sha'])) $newsha = substr($apij['sha'], 0, 7);
+        }
+    }
 
     $tarfile = $tmppath . '/github.zip';
     $context_options = array(
@@ -472,7 +484,9 @@ function OnekeyUpate($GitSource = 'Github', $auth = 'qkqpttgf', $project = 'OneM
     // put in config
     $coderoot = __DIR__;
     $coderoot = splitlast($coderoot, '/')[0] . '/';
+    if ($newsha != '') @file_put_contents($coderoot . '.data/om_sha', $newsha);
     copy($coderoot . '.data/config.php', $outPath . '/api/.data/config.php');
+    if (file_exists($coderoot . '.data/om_sha')) copy($coderoot . '.data/om_sha', $outPath . '/api/.data/om_sha');
 
     return VercelUpdate(getConfig('APIKey'), $outPath);
 }
