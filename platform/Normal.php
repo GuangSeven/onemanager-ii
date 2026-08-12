@@ -323,11 +323,17 @@ function OnekeyUpate($GitSource = 'Github', $auth = 'qkqpttgf', $project = 'OneM
 
     $newsha = '';
     if (isset($apiurl)) {
-        $apir = curl('GET', $apiurl, '', ['User-Agent' => 'OneManager/2.0']);
-        if ($apir['stat'] == 200) {
-            $apij = json_decode($apir['body'], true);
-            if (isset($apij['commit']['sha'])) $newsha = substr($apij['commit']['sha'], 0, 7);
-            elseif (isset($apij['sha'])) $newsha = substr($apij['sha'], 0, 7);
+        $api_body = '';
+        $apictx = stream_context_create(['http' => ['header' => "User-Agent: OneManager/2.0", 'timeout' => 8]]);
+        $api_body = @file_get_contents($apiurl, false, $apictx);
+        if (!$api_body && function_exists('curl_init')) {
+            $apir = curl('GET', $apiurl, '', ['User-Agent' => 'OneManager/2.0']);
+            if ($apir['stat'] == 200) $api_body = $apir['body'];
+        }
+        if ($api_body) {
+            $apij = json_decode($api_body, true);
+            if (isset($apij['sha']) && $apij['sha'] != '') $newsha = substr($apij['sha'], 0, 7);
+            elseif (isset($apij['commit']['sha']) && $apij['commit']['sha'] != '') $newsha = substr($apij['commit']['sha'], 0, 7);
         }
     }
     $zipfile = $projectPath . $slash . 'updateCode.zip';
