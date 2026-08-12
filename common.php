@@ -373,7 +373,7 @@ function main($path) {
         if ($_FILES['file1']['size']>4*1024*1024) return output('File too large', 400);
         return $drive->smallfileupload($path, $_FILES['file1']);*/
     }
-    if ($_SERVER['admin']) {
+    if ($_SERVER['admin'] || ($_SERVER['is_guestup_path'] && passhidden(path_format(getConfig('guestup_path', $_SERVER['disktag']))) < 4)) {
         $tmp = adminoperate($path);
         if ($tmp['statusCode'] > 0) {
             savecache('path_' . $path1, '', $_SERVER['disktag'], 1);
@@ -1119,6 +1119,12 @@ function output($body, $statusCode = 200, $headers = [], $isBase64Encoded = fals
     ];
 }
 
+function is_authorized_operate() {
+    if ($_SERVER['admin']) return true;
+    if ($_SERVER['is_guestup_path'] && passhidden(path_format(getConfig('guestup_path', $_SERVER['disktag']))) < 4) return true;
+    return false;
+}
+
 function passhidden($path) {
     if ($_SERVER['admin']) return 0;
     //$path = str_replace('+','%2B',$path);
@@ -1255,7 +1261,7 @@ function adminoperate($path) {
     }
 
     if ((isset($tmpget['rename_newname']) && $tmpget['rename_newname'] != $tmpget['rename_oldname'] && $tmpget['rename_newname'] != '') || (isset($tmppost['rename_newname']) && $tmppost['rename_newname'] != $tmppost['rename_oldname'] && $tmppost['rename_newname'] != '')) {
-        if (!compareadminmd5('admin', getConfig('admin'), $_COOKIE['admin'], $_POST['_admin'])) return ['statusCode' => 403];
+        if (!is_authorized_operate()) return ['statusCode' => 403];
         if (isset($tmppost['rename_newname'])) $VAR = 'tmppost';
         else $VAR = 'tmpget';
         // rename 重命名
@@ -1265,7 +1271,7 @@ function adminoperate($path) {
         return $drive->Rename($file, ${$VAR}['rename_newname']);
     }
     if (isset($tmpget['delete_name']) || isset($tmppost['delete_name'])) {
-        if (!compareadminmd5('admin', getConfig('admin'), $_COOKIE['admin'], $_POST['_admin'])) return ['statusCode' => 403];
+        if (!is_authorized_operate()) return ['statusCode' => 403];
         if (isset($tmppost['delete_name'])) $VAR = 'tmppost';
         else $VAR = 'tmpget';
         // delete 删除
@@ -1287,7 +1293,7 @@ function adminoperate($path) {
         return $drive->Encrypt($folder, getConfig('passfile'), ${$VAR}['encrypt_newpass']);
     }
     if (isset($tmpget['move_folder']) || isset($tmppost['move_folder'])) {
-        if (!compareadminmd5('admin', getConfig('admin'), $_COOKIE['admin'], $_POST['_admin'])) return ['statusCode' => 403];
+        if (!is_authorized_operate()) return ['statusCode' => 403];
         if (isset($tmppost['move_folder'])) $VAR = 'tmppost';
         else $VAR = 'tmpget';
         // move 移动
@@ -1312,7 +1318,7 @@ function adminoperate($path) {
         }
     }
     if (isset($tmpget['copy_name']) || isset($tmppost['copy_name'])) {
-        if (!compareadminmd5('admin', getConfig('admin'), $_COOKIE['admin'], $_POST['_admin'])) return ['statusCode' => 403];
+        if (!is_authorized_operate()) return ['statusCode' => 403];
         if (isset($tmppost['copy_name'])) $VAR = 'tmppost';
         else $VAR = 'tmpget';
         // copy 复制
@@ -2374,11 +2380,7 @@ function render_list($path = '', $files = []) {
 
     //if (isset($_COOKIE['theme'])&&$_COOKIE['theme']!='') $theme = $_COOKIE['theme'];
     //if ( !file_exists(__DIR__ . $slash .'theme' . $slash . $theme) ) $theme = '';
-    if ($_SERVER['admin']) {
-        $tmp = getConfig('customTheme');
-        if ($tmp != '') $theme = $tmp;
-        else $theme = 'classic.html';
-    }
+    if ($_SERVER['admin']) $theme = 'classic.html';
     if ($theme == '') {
         $tmp = getConfig('customTheme');
         if ($tmp != '') $theme = $tmp;
@@ -2516,6 +2518,12 @@ function render_list($path = '', $files = []) {
             foreach ($Driver_arr as $driver) {
                 getStackHtml($html, $driver . "UploadJs", 1);
             }
+        }
+
+        if ($_SERVER['is_guestup_path'] && passhidden($gup_root) < 4) {
+            getStackHtml($html, "GuestUp", 0);
+        } else {
+            getStackHtml($html, "GuestUp", 1);
         }
 
         if ($files['type'] == 'file') {
