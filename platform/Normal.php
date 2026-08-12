@@ -387,6 +387,7 @@ function OnekeyUpate($GitSource = 'Github', $auth = 'qkqpttgf', $project = 'OneM
 
     //unlink($outPath.'/config.php');
     if ($newsha != '') @file_put_contents($projectPath . $slash . '.data' . $slash . 'om_sha', $newsha);
+    else @unlink($projectPath . $slash . '.data' . $slash . 'om_sha');
     $response = rename($projectPath . $slash . '.data' . $slash . 'config.php', $outPath . $slash . '.data' . $slash . 'config.php');
     if (!$response) {
         $tmp1['code'] = "Move Failed";

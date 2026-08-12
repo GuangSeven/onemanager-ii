@@ -491,6 +491,7 @@ function OnekeyUpate($GitSource = 'Github', $auth = 'qkqpttgf', $project = 'OneM
     $coderoot = __DIR__;
     $coderoot = splitlast($coderoot, '/')[0] . '/';
     if ($newsha != '') @file_put_contents($coderoot . '.data/om_sha', $newsha);
+    else @unlink($coderoot . '.data/om_sha');
     copy($coderoot . '.data/config.php', $outPath . '/api/.data/config.php');
     if (file_exists($coderoot . '.data/om_sha')) copy($coderoot . '.data/om_sha', $outPath . '/api/.data/om_sha');
 

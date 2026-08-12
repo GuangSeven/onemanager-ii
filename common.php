@@ -2713,18 +2713,8 @@ function render_list($path = '', $files = []) {
             replaceHtml($html, "Version", '-');
         }
         replaceHtml($html, "ThemeUrl", htmlspecialchars(getConfig('customTheme')));
-        $om_sha = getcache('om_sha');
-        if (!$om_sha) {
-            $apictx = stream_context_create(['http' => ['header' => "User-Agent: OneManager/2.0", 'timeout' => 5]]);
-            $api_body = @file_get_contents('https://api.github.com/repos/GuangSeven/onemanager-ii/commits/master', false, $apictx);
-            if ($api_body) {
-                $apij = json_decode($api_body, true);
-                if (isset($apij['sha']) && $apij['sha'] != '') $om_sha = substr($apij['sha'], 0, 7);
-            }
-            if (!$om_sha) $om_sha = @file_get_contents(__DIR__ . $slash . '.data' . $slash . 'om_sha');
-            if (!$om_sha || trim($om_sha) == '') $om_sha = '—';
-            savecache('om_sha', trim($om_sha), '', 86400);
-        }
+        $om_sha = @file_get_contents(__DIR__ . $slash . '.data' . $slash . 'om_sha');
+        if (!$om_sha || trim($om_sha) == '') $om_sha = '—';
         replaceHtml($html, "OmHash", htmlspecialchars(trim($om_sha)));
 
         $title = $pretitle;
