@@ -2712,6 +2712,7 @@ function render_list($path = '', $files = []) {
         } else {
             replaceHtml($html, "Version", '-');
         }
+        replaceHtml($html, "ThemeUrl", htmlspecialchars(getConfig('customTheme')));
 
         $title = $pretitle;
         if ($_SERVER['base_disk_path'] != $_SERVER['base_path']) {
