@@ -2936,7 +2936,6 @@ function render_list($path = '', $files = []) {
         replaceHtml($html, "ImgExts", $imgextstr);
 
         replaceHtml($html, "Sitename", $_SERVER['sitename']);
-        replaceHtml($html, "DiskTag", (count(explode("|", getConfig('disktag'))) > 1 ? $_SERVER['disktag'] : ''));
 
         $tmp = splitfirst($html, '<!--MultiDiskAreaStart-->');
         $html = $tmp[0];
