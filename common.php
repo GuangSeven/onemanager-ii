@@ -1350,14 +1350,20 @@ function adminoperate($path) {
         return $drive->Edit($file, $tmppost['editfile']);
     }
     if (isset($tmpget['create_name']) || isset($tmppost['create_name'])) {
-        if (!compareadminmd5('admin', getConfig('admin'), $_COOKIE['admin'], $_POST['_admin'])) return ['statusCode' => 403];
+        if (!is_authorized_operate()) return ['statusCode' => 403];
         if (isset($tmppost['create_name'])) $VAR = 'tmppost';
         else $VAR = 'tmpget';
         // create 新建
+        $create_name = ${$VAR}['create_name'];
+        if (!$_SERVER['admin']) {
+            if (!is_string($create_name) || $create_name == '' || strpos($create_name, '/') !== false || strpos($create_name, '\\') !== false || strpos($create_name, '..') !== false) return ['statusCode' => 403];
+            if (getConfig('passfile') != '' && strtolower($create_name) == strtolower(getConfig('passfile'))) return ['statusCode' => 403];
+            if (${$VAR}['create_type'] != 'file' && ${$VAR}['create_type'] != 'folder') return ['statusCode' => 403];
+        }
         $parent['path'] = $path1;
         $parent['name'] = '';
         $parent['id'] = ${$VAR}['create_fileid'];
-        return $drive->Create($parent, ${$VAR}['create_type'], ${$VAR}['create_name'], ${$VAR}['create_text']);
+        return $drive->Create($parent, ${$VAR}['create_type'], $create_name, ${$VAR}['create_text']);
     }
     return $tmparr;
 }
