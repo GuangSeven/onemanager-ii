@@ -379,26 +379,15 @@ function main($path) {
             if (!$_SERVER['is_guestup_path']) return output('Not_Guest_Upload_Folder', 400);
             if (passhidden(path_format(getConfig('guestup_path', $_SERVER['disktag']))) >= 4) return output('Not_Allow_Upload', 400);
         }
-        $favtag = $_SERVER['disktag'];
-        $disktags = explode('|', getConfig('disktag'));
-        if (count($disktags) > 1) $favtag = $disktags[0];
-        $fav = getcache('favtxt_' . $favtag, $favtag);
+        $fav = getcache('favtxt', $_SERVER['disktag']);
         if ($fav === false) {
             $fav = '';
-            $favdrive = null;
-            if ($favtag == $_SERVER['disktag']) $favdrive = $drive;
-            if (driveisfine($favtag, $favdrive)) {
-                $tmptag = $_SERVER['disktag'];
-                $_SERVER['disktag'] = $favtag;
-                $favlistpath = getListpath($_SERVER['HTTP_HOST']);
-                $_SERVER['disktag'] = $tmptag;
-                $favfile = $favdrive->list_files(path_format($favlistpath . '/fav.txt'));
-                if (isset($favfile['type']) && $favfile['type'] == 'file' && isset($favfile['url'])) {
-                    $arr = curl('GET', $favfile['url']);
-                    if ($arr['stat'] == 200) $fav = $arr['body'];
-                }
+            $favfile = get_content('/fav.txt');
+            if (isset($favfile['type']) && $favfile['type'] == 'file' && isset($favfile['url'])) {
+                $arr = curl('GET', $favfile['url']);
+                if ($arr['stat'] == 200) $fav = $arr['body'];
             }
-            savecache('favtxt_' . $favtag, $fav, $favtag, 60);
+            savecache('favtxt', $fav, $_SERVER['disktag'], 60);
         }
         return output(json_encode(['fav' => $fav]), 200);
     }
@@ -415,31 +404,20 @@ function main($path) {
         foreach ($favarr as $favitem) {
             if (!is_array($favitem) || !isset($favitem['n']) || !isset($favitem['u']) || !isset($favitem['t']) || !is_string($favitem['n']) || !is_string($favitem['u']) || ($favitem['t'] != 'file' && $favitem['t'] != 'folder')) return output('Bad fav data', 400);
         }
-        $favtag = $_SERVER['disktag'];
-        $disktags = explode('|', getConfig('disktag'));
-        if (count($disktags) > 1) $favtag = $disktags[0];
-        $favdrive = null;
-        if ($favtag == $_SERVER['disktag']) $favdrive = $drive;
-        if (!driveisfine($favtag, $favdrive)) return output('Fav disk [ ' . $favtag . ' ] error.', 500);
-        $tmptag = $_SERVER['disktag'];
-        $_SERVER['disktag'] = $favtag;
-        $favlistpath = getListpath($_SERVER['HTTP_HOST']);
-        $_SERVER['disktag'] = $tmptag;
-        $favpath = path_format($favlistpath . '/fav.txt');
-        $favfile = $favdrive->list_files($favpath);
+        $favfile = get_content('/fav.txt');
         if (isset($favfile['type']) && $favfile['type'] == 'file') {
-            $file['path'] = $favpath;
+            $file['path'] = path_format($_SERVER['list_path'] . '/fav.txt');
             $file['name'] = '';
             $file['id'] = '';
-            $favdrive->Edit($file, $fav);
+            $drive->Edit($file, $fav);
         } else {
-            $parent['path'] = path_format($favlistpath);
+            $parent['path'] = path_format($_SERVER['list_path']);
             $parent['name'] = '';
             $parent['id'] = '';
-            $favdrive->Create($parent, 'file', 'fav.txt', $fav);
+            $drive->Create($parent, 'file', 'fav.txt', $fav);
         }
-        savecache('favtxt_' . $favtag, $fav, $favtag, 60);
-        savecache('path_' . path_format($favlistpath), '', $favtag, 1);
+        savecache('favtxt', $fav, $_SERVER['disktag'], 60);
+        savecache('path_' . path_format($_SERVER['list_path']), '', $_SERVER['disktag'], 1);
         return output(json_encode(['fav' => $fav]), 200);
     }
     if ($_SERVER['admin']) {
