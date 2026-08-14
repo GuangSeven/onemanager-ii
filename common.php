@@ -373,6 +373,53 @@ function main($path) {
         if ($_FILES['file1']['size']>4*1024*1024) return output('File too large', 400);
         return $drive->smallfileupload($path, $_FILES['file1']);*/
     }
+    if ($_GET['action'] == 'get_fav' || $_POST['action'] == 'get_fav') {
+        if (!driveisfine($_SERVER['disktag'], $drive)) return output($_SERVER['disktag'] ? 'disk [ ' . $_SERVER['disktag'] . ' ] error.' : 'Not in drive', 403);
+        if (!$_SERVER['admin']) {
+            if (!$_SERVER['is_guestup_path']) return output('Not_Guest_Upload_Folder', 400);
+            if (passhidden(path_format(getConfig('guestup_path', $_SERVER['disktag']))) >= 4) return output('Not_Allow_Upload', 400);
+        }
+        $fav = getcache('favtxt', $_SERVER['disktag']);
+        if ($fav === false) {
+            $fav = '';
+            $favfile = get_content('/fav.txt');
+            if (isset($favfile['type']) && $favfile['type'] == 'file' && isset($favfile['url'])) {
+                $arr = curl('GET', $favfile['url']);
+                if ($arr['stat'] == 200) $fav = $arr['body'];
+            }
+            savecache('favtxt', $fav, $_SERVER['disktag'], 60);
+        }
+        return output(json_encode(['fav' => $fav]), 200);
+    }
+    if ($_POST['action'] == 'save_fav') {
+        if (!driveisfine($_SERVER['disktag'], $drive)) return output($_SERVER['disktag'] ? 'disk [ ' . $_SERVER['disktag'] . ' ] error.' : 'Not in drive', 403);
+        if (!$_SERVER['admin']) {
+            if (!$_SERVER['is_guestup_path']) return output('Not_Guest_Upload_Folder', 400);
+            if (passhidden(path_format(getConfig('guestup_path', $_SERVER['disktag']))) >= 4) return output('Not_Allow_Upload', 400);
+        }
+        $fav = isset($_POST['fav']) ? $_POST['fav'] : '';
+        if (strlen($fav) > 524288) return output('Fav data too large', 400);
+        $favarr = json_decode($fav, true);
+        if (!is_array($favarr)) return output('Bad fav data', 400);
+        foreach ($favarr as $favitem) {
+            if (!is_array($favitem) || !isset($favitem['n']) || !isset($favitem['u']) || !isset($favitem['t']) || !is_string($favitem['n']) || !is_string($favitem['u']) || ($favitem['t'] != 'file' && $favitem['t'] != 'folder')) return output('Bad fav data', 400);
+        }
+        $favfile = get_content('/fav.txt');
+        if (isset($favfile['type']) && $favfile['type'] == 'file') {
+            $file['path'] = path_format($_SERVER['list_path'] . '/fav.txt');
+            $file['name'] = '';
+            $file['id'] = '';
+            $drive->Edit($file, $fav);
+        } else {
+            $parent['path'] = path_format($_SERVER['list_path']);
+            $parent['name'] = '';
+            $parent['id'] = '';
+            $drive->Create($parent, 'file', 'fav.txt', $fav);
+        }
+        savecache('favtxt', $fav, $_SERVER['disktag'], 60);
+        savecache('path_' . path_format($_SERVER['list_path']), '', $_SERVER['disktag'], 1);
+        return output(json_encode(['fav' => $fav]), 200);
+    }
     if ($_SERVER['admin']) {
         $tmp = adminoperate($path);
         if ($tmp['statusCode'] > 0) {
@@ -686,6 +733,7 @@ function isHideFile($name) {
     ];
 
     if ($name == getConfig('passfile')) return true;
+    if (strtolower($name) == 'fav.txt') return true;
     if (substr($name, 0, 1) == '.') return true;
     if (getConfig('hideFunctionalityFile')) if (in_array(strtolower($name), $FunctionalityFile)) return true;
     return false;
